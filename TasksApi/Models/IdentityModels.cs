@@ -29,5 +29,7 @@ namespace TasksApi.Models
         {
             return new ApplicationDbContext();
         }
+
+        public System.Data.Entity.DbSet<TasksDataAccess.Task> Tasks { get; set; }
     }
 }
