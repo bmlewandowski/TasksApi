@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -13,6 +15,7 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.OAuth;
+using Newtonsoft.Json.Linq;
 using TasksApi.Models;
 using TasksApi.Providers;
 using TasksApi.Results;
@@ -125,7 +128,7 @@ namespace TasksApi.Controllers
 
             IdentityResult result = await UserManager.ChangePasswordAsync(User.Identity.GetUserId(), model.OldPassword,
                 model.NewPassword);
-            
+
             if (!result.Succeeded)
             {
                 return GetErrorResult(result);
@@ -258,9 +261,9 @@ namespace TasksApi.Controllers
             if (hasRegistered)
             {
                 Authentication.SignOut(DefaultAuthenticationTypes.ExternalCookie);
-                
-                 ClaimsIdentity oAuthIdentity = await user.GenerateUserIdentityAsync(UserManager,
-                    OAuthDefaults.AuthenticationType);
+
+                ClaimsIdentity oAuthIdentity = await user.GenerateUserIdentityAsync(UserManager,
+                   OAuthDefaults.AuthenticationType);
                 ClaimsIdentity cookieIdentity = await user.GenerateUserIdentityAsync(UserManager,
                     CookieAuthenticationDefaults.AuthenticationType);
 
@@ -318,6 +321,111 @@ namespace TasksApi.Controllers
             return logins;
         }
 
+
+
+
+        // POST api/Account/Registeradmin
+        [AllowAnonymous]
+        [Route("Registeradmin")]
+        public async Task<IHttpActionResult> Registeradmin(RegisterAdminBindingModel model)
+        {
+
+            model.Password = Guid.NewGuid().ToString();
+            model.ConfirmPassword = model.Password;
+            model.Admin = 1;
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = new ApplicationUser() { UserName = model.Email, Email = model.Email };
+
+            IdentityResult result = await UserManager.CreateAsync(user, model.Password);
+
+            // BEGIN CUSTOMIZATION
+
+            //Creates Organization in Organizations table and creates user as admin in OrganizationUsers table
+
+            var userId = user.Id;
+            var organization = model.Organization;
+
+            SqlConnection con = new SqlConnection();
+            con.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+
+            string sqlinsertorg = "INSERT INTO Organizations (Name) values (@Name);SELECT SCOPE_IDENTITY()";
+
+            con.Open();
+            SqlCommand cmd = new SqlCommand(sqlinsertorg, con);
+
+            cmd.Parameters.Add("@name", SqlDbType.VarChar);
+            cmd.Parameters["@name"].Value = organization;
+
+            var OrgId = cmd.ExecuteScalar();
+
+            string sqlinsertorgusr = "INSERT INTO OrganizationUsers (OrgId, UserId, Admin, AuthKey01, AuthKey02, AuthKeyExpires) values (@OrgId, @UserId, @Admin, @Authkey01, @Authkey02, @AuthKeyExpires);SELECT SCOPE_IDENTITY()";
+
+            SqlCommand cmd2 = new SqlCommand(sqlinsertorgusr, con);
+
+            cmd2.Parameters.Add("@OrgId", SqlDbType.Int);
+            cmd2.Parameters["@OrgId"].Value = OrgId;
+
+            cmd2.Parameters.Add("@UserId", SqlDbType.VarChar);
+            cmd2.Parameters["@UserId"].Value = userId;
+
+            cmd2.Parameters.Add("@Admin", SqlDbType.Int);
+            cmd2.Parameters["@Admin"].Value = 1;
+
+            cmd2.Parameters.Add("@AuthKey01", SqlDbType.VarChar);
+            cmd2.Parameters["@AuthKey01"].Value = Guid.NewGuid().ToString();
+
+            cmd2.Parameters.Add("@AuthKey02", SqlDbType.VarChar);
+            cmd2.Parameters["@AuthKey02"].Value = Guid.NewGuid().ToString();
+
+            cmd2.Parameters.Add("@AuthKeyExpires", SqlDbType.DateTime2);
+            cmd2.Parameters["@AuthKeyExpires"].Value = DateTime.Now.AddDays(1);
+
+            var OrgUserId = cmd2.ExecuteScalar();
+
+            con.Close();
+            con.Dispose();
+
+            // END CUSTOMIZATION
+
+            if (!result.Succeeded)
+            {
+                return GetErrorResult(result);
+            }
+
+            else
+            {
+                //Log the user in
+                var tokenExpiration = TimeSpan.FromDays(1);
+                ClaimsIdentity identity = new ClaimsIdentity(OAuthDefaults.AuthenticationType);
+                identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
+                identity.AddClaim(new Claim("role", "user"));
+                var props = new AuthenticationProperties()
+                {
+                    IssuedUtc = DateTime.UtcNow,
+                    ExpiresUtc = DateTime.UtcNow.Add(tokenExpiration),
+                };
+                var ticket = new AuthenticationTicket(identity, props);
+                var accessToken = Startup.OAuthOptions.AccessTokenFormat.Protect(ticket);
+                JObject tokenResponse = new JObject(
+                new JProperty("userId", userId),
+                new JProperty("userName", user.UserName),
+                new JProperty("access_token", accessToken),
+                new JProperty("token_type", "bearer"),
+                new JProperty("expires_in", tokenExpiration.TotalSeconds.ToString()),
+                new JProperty(".issued", ticket.Properties.IssuedUtc.GetValueOrDefault().DateTime.ToUniversalTime()),
+                new JProperty(".expires", ticket.Properties.ExpiresUtc.GetValueOrDefault().DateTime.ToUniversalTime()));
+
+                return Ok(tokenResponse);
+            }
+
+            //return Ok();
+        }
+
         // POST api/Account/Register
         [AllowAnonymous]
         [Route("Register")]
@@ -331,6 +439,55 @@ namespace TasksApi.Controllers
             var user = new ApplicationUser() { UserName = model.Email, Email = model.Email };
 
             IdentityResult result = await UserManager.CreateAsync(user, model.Password);
+
+            // BEGIN CUSTOMIZATION
+
+            //Creates Organization in Organisations table and creates user as admin in OrganizationUsers table
+
+            var userId = user.Id;
+            var organization = model.Organization;
+
+            SqlConnection con = new SqlConnection();
+            con.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+
+            string sqlinsertorg = "INSERT INTO Organizations (Name) values (@Name);SELECT SCOPE_IDENTITY()";
+
+            con.Open();
+            SqlCommand cmd = new SqlCommand(sqlinsertorg, con);
+
+            cmd.Parameters.Add("@name", SqlDbType.VarChar);
+            cmd.Parameters["@name"].Value = organization;
+
+            var OrgId = cmd.ExecuteScalar();
+
+            string sqlinsertorgusr = "INSERT INTO OrganizationUsers (OrgId, UserId, Admin, AuthKey01, AuthKey02, AuthKeyExpires) values (@OrgId, @UserId, @Admin, @Authkey01, @Authkey02, @AuthKeyExpires);SELECT SCOPE_IDENTITY()";
+
+            SqlCommand cmd2 = new SqlCommand(sqlinsertorgusr, con);
+
+            cmd2.Parameters.Add("@OrgId", SqlDbType.Int);
+            cmd2.Parameters["@OrgId"].Value = OrgId;
+
+            cmd2.Parameters.Add("@UserId", SqlDbType.VarChar);
+            cmd2.Parameters["@UserId"].Value = userId;
+
+            cmd2.Parameters.Add("@Admin", SqlDbType.Int);
+            cmd2.Parameters["@Admin"].Value = 1;
+
+            cmd2.Parameters.Add("@AuthKey01", SqlDbType.VarChar);
+            cmd2.Parameters["@AuthKey01"].Value = Guid.NewGuid().ToString();
+
+            cmd2.Parameters.Add("@AuthKey02", SqlDbType.VarChar);
+            cmd2.Parameters["@AuthKey02"].Value = Guid.NewGuid().ToString();
+
+            cmd2.Parameters.Add("@AuthKeyExpires", SqlDbType.DateTime2);
+            cmd2.Parameters["@AuthKeyExpires"].Value = DateTime.Now.AddDays(1);
+
+            var OrgUserId = cmd2.ExecuteScalar();
+
+            con.Close();
+            con.Dispose();
+
+            // END CUSTOMIZATION
 
             if (!result.Succeeded)
             {
@@ -368,7 +525,7 @@ namespace TasksApi.Controllers
             result = await UserManager.AddLoginAsync(user.Id, info.Login);
             if (!result.Succeeded)
             {
-                return GetErrorResult(result); 
+                return GetErrorResult(result);
             }
             return Ok();
         }

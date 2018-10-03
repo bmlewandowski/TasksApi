@@ -74,6 +74,9 @@ namespace TasksApi.Controllers
         [ResponseType(typeof(TaskList))]
         public IHttpActionResult PostTaskList(TaskList taskList)
         {
+
+            //taskList.OwnerId = "";
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
