@@ -6,6 +6,7 @@ using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Web.Http;
 using System.Web.Http.Description;
 using TasksDataAccess;
@@ -17,12 +18,18 @@ namespace TasksApi.Controllers
         private TASKSDBEntities db = new TASKSDBEntities();
 
         // GET: api/TaskLists
+        [Authorize]
         public IQueryable<TaskList> GetTaskLists()
         {
-            return db.TaskLists;
+            //var Name = ClaimsPrincipal.Current.Identity.Name;
+            var claimsIdentity = (ClaimsIdentity)this.RequestContext.Principal.Identity;
+            var userId = claimsIdentity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            return db.TaskLists.Where((p) => p.OwnerId == userId);
         }
 
         // GET: api/TaskLists/5
+        [Authorize]
         [ResponseType(typeof(TaskList))]
         public IHttpActionResult GetTaskList(int id)
         {
@@ -36,6 +43,7 @@ namespace TasksApi.Controllers
         }
 
         // PUT: api/TaskLists/5
+        [Authorize]
         [ResponseType(typeof(void))]
         public IHttpActionResult PutTaskList(int id, TaskList taskList)
         {
@@ -71,11 +79,14 @@ namespace TasksApi.Controllers
         }
 
         // POST: api/TaskLists
+        [Authorize]
         [ResponseType(typeof(TaskList))]
         public IHttpActionResult PostTaskList(TaskList taskList)
         {
 
-            //taskList.OwnerId = "";
+            var claimsIdentity = (ClaimsIdentity)this.RequestContext.Principal.Identity;
+            var userId = claimsIdentity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+            taskList.OwnerId = userId;
 
             if (!ModelState.IsValid)
             {
@@ -89,6 +100,7 @@ namespace TasksApi.Controllers
         }
 
         // DELETE: api/TaskLists/5
+        [Authorize]
         [ResponseType(typeof(TaskList))]
         public IHttpActionResult DeleteTaskList(int id)
         {

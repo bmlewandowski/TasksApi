@@ -403,7 +403,9 @@ namespace TasksApi.Controllers
                 var tokenExpiration = TimeSpan.FromDays(1);
                 ClaimsIdentity identity = new ClaimsIdentity(OAuthDefaults.AuthenticationType);
                 identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
+                identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
                 identity.AddClaim(new Claim("role", "user"));
+
                 var props = new AuthenticationProperties()
                 {
                     IssuedUtc = DateTime.UtcNow,

@@ -110,7 +110,9 @@ namespace TasksApi.Controllers
                     var tokenExpiration = TimeSpan.FromDays(1);
                     ClaimsIdentity identity = new ClaimsIdentity(OAuthDefaults.AuthenticationType);
                     identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
+                    identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
                     identity.AddClaim(new Claim("role", "user"));
+
                     var props = new AuthenticationProperties()
                     {
                         IssuedUtc = DateTime.UtcNow,
@@ -183,7 +185,7 @@ namespace TasksApi.Controllers
                 sqlConn.Close();
 
                 var tokenResponse = "/auth?UserId=" + user.Id + "&Authkey01=" + NewAuthKey01 + "&Authkey02=" + NewAuthKey02;
-                await SendMail(tokenResponse, user.Email);
+                //await SendMail(tokenResponse, user.Email);
 
                 HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK, tokenResponse);
                 return response;

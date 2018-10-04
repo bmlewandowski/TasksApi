@@ -17,12 +17,14 @@ namespace TasksApi.Controllers
         private TASKSDBEntities db = new TASKSDBEntities();
 
         // GET: api/Tasks
+        [Authorize]
         public IQueryable<Task> GetTasks()
         {
             return db.Tasks;
         }
 
         // GET: api/Tasks/5
+        [Authorize]
         [ResponseType(typeof(Task))]
         public IHttpActionResult GetTask(int id)
         {
@@ -36,6 +38,7 @@ namespace TasksApi.Controllers
         }
 
         // PUT: api/Tasks/5
+        [Authorize]
         [ResponseType(typeof(void))]
         public IHttpActionResult PutTask(int id, Task task)
         {
@@ -71,6 +74,7 @@ namespace TasksApi.Controllers
         }
 
         // POST: api/Tasks
+        [Authorize]
         [ResponseType(typeof(Task))]
         public IHttpActionResult PostTask(Task task)
         {
@@ -86,6 +90,7 @@ namespace TasksApi.Controllers
         }
 
         // DELETE: api/Tasks/5
+        [Authorize]
         [ResponseType(typeof(Task))]
         public IHttpActionResult DeleteTask(int id)
         {
