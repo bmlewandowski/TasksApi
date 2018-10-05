@@ -6,6 +6,7 @@ using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Web.Http;
 using System.Web.Http.Description;
 using TasksDataAccess;
@@ -18,13 +19,13 @@ namespace TasksApi.Controllers
 
         // GET: api/Tasks
         [Authorize]
-        public IQueryable<Task> GetTasks()
+        public IQueryable<Task> GetTasks([FromUri] int listid)
         {
-            return db.Tasks;
+            //return all tasks associated with the tasklist id
+            return db.Tasks.Where((p) => p.ListId == listid);
         }
 
         // GET: api/Tasks/5
-        [Authorize]
         [ResponseType(typeof(Task))]
         public IHttpActionResult GetTask(int id)
         {
@@ -38,7 +39,6 @@ namespace TasksApi.Controllers
         }
 
         // PUT: api/Tasks/5
-        [Authorize]
         [ResponseType(typeof(void))]
         public IHttpActionResult PutTask(int id, Task task)
         {
@@ -74,10 +74,14 @@ namespace TasksApi.Controllers
         }
 
         // POST: api/Tasks
-        [Authorize]
         [ResponseType(typeof(Task))]
         public IHttpActionResult PostTask(Task task)
         {
+
+            var claimsIdentity = (ClaimsIdentity)this.RequestContext.Principal.Identity;
+            var userId = claimsIdentity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+            task.OwnerId = userId;
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -87,10 +91,10 @@ namespace TasksApi.Controllers
             db.SaveChanges();
 
             return CreatedAtRoute("DefaultApi", new { id = task.Id }, task);
+
         }
 
         // DELETE: api/Tasks/5
-        [Authorize]
         [ResponseType(typeof(Task))]
         public IHttpActionResult DeleteTask(int id)
         {

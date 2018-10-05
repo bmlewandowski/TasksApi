@@ -21,5 +21,6 @@ namespace TasksDataAccess
         public System.DateTime Created { get; set; }
         public string CompletedBy { get; set; }
         public Nullable<System.DateTime> CompletedOn { get; set; }
+        public int ListId { get; set; }
     }
 }
