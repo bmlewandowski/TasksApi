@@ -30,6 +30,7 @@ namespace TasksApi.Controllers
         public IHttpActionResult GetTask(int id)
         {
             Task task = db.Tasks.Find(id);
+            //TODO: Make sure task is accessible for requestor from permissions
             if (task == null)
             {
                 return NotFound();
@@ -98,8 +99,14 @@ namespace TasksApi.Controllers
         [ResponseType(typeof(Task))]
         public IHttpActionResult DeleteTask(int id)
         {
+
+            var claimsIdentity = (ClaimsIdentity)this.RequestContext.Principal.Identity;
+            var userId = claimsIdentity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+
             Task task = db.Tasks.Find(id);
-            if (task == null)
+
+            //make sure task exists and is owned by requester
+            if (task == null || task.OwnerId != userId)
             {
                 return NotFound();
             }

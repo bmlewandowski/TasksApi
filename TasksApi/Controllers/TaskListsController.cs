@@ -111,6 +111,9 @@ namespace TasksApi.Controllers
             }
 
             db.TaskLists.Remove(taskList);
+
+            //TODO: Do a loop to delete all tasks included in a tasklist and tasklist members
+
             db.SaveChanges();
 
             return Ok(taskList);
