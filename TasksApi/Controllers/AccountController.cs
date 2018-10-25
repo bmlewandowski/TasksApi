@@ -19,6 +19,7 @@ using Newtonsoft.Json.Linq;
 using TasksApi.Models;
 using TasksApi.Providers;
 using TasksApi.Results;
+using System.Linq;
 
 namespace TasksApi.Controllers
 {
@@ -321,10 +322,91 @@ namespace TasksApi.Controllers
             return logins;
         }
 
+        // POST api/Account/Registeruser
+        /// <summary>
+        /// Allows Admin to add User to Organization
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [Authorize]
+        [Route("Registeruser")]
+        public async Task<IHttpActionResult> Registeruser(RegisterUserBindingModel model)
+        {
 
+            var claimsIdentity = (ClaimsIdentity)this.RequestContext.Principal.Identity;
+            var adminId = claimsIdentity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+            SqlConnection con = new SqlConnection();
+            con.ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+            con.Open();
+
+            string sqlgetorgid = "SELECT OrgId FROM OrganizationUsers WHERE UserId = @userId";
+            SqlCommand cmdget = new SqlCommand(sqlgetorgid, con);
+
+            cmdget.Parameters.Add("@userId", SqlDbType.VarChar);
+            cmdget.Parameters["@userId"].Value = adminId;
+
+            var OrgId = cmdget.ExecuteScalar();
+
+            model.Password = Guid.NewGuid().ToString();
+            model.ConfirmPassword = model.Password;
+
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = new ApplicationUser() { UserName = model.Email, Email = model.Email };
+
+            IdentityResult result = await UserManager.CreateAsync(user, model.Password);
+
+            var userId = user.Id;
+
+            string sqlinsertorgusr = "INSERT INTO OrganizationUsers (OrgId, UserId, AuthKey01, AuthKey02, AuthKeyExpires) values (@OrgId, @UserId, @Authkey01, @Authkey02, @AuthKeyExpires);SELECT SCOPE_IDENTITY()";
+
+            SqlCommand cmd = new SqlCommand(sqlinsertorgusr, con);
+
+            cmd.Parameters.Add("@OrgId", SqlDbType.Int);
+            cmd.Parameters["@OrgId"].Value = OrgId;
+
+            cmd.Parameters.Add("@UserId", SqlDbType.VarChar);
+            cmd.Parameters["@UserId"].Value = userId;
+
+            cmd.Parameters.Add("@AuthKey01", SqlDbType.VarChar);
+            cmd.Parameters["@AuthKey01"].Value = Guid.NewGuid().ToString();
+
+            cmd.Parameters.Add("@AuthKey02", SqlDbType.VarChar);
+            cmd.Parameters["@AuthKey02"].Value = Guid.NewGuid().ToString();
+
+            cmd.Parameters.Add("@AuthKeyExpires", SqlDbType.DateTime2);
+            cmd.Parameters["@AuthKeyExpires"].Value = DateTime.Now.AddDays(1);
+
+            var OrgUserId = cmd.ExecuteScalar();
+
+            con.Close();
+            con.Dispose();
+
+            if (!result.Succeeded)
+            {
+                return GetErrorResult(result);
+            }
+
+            else
+            {
+                //Log the user in
+
+                return Ok("User Imported");
+            }
+
+        }
 
 
         // POST api/Account/Registeradmin
+        /// <summary>
+        /// Creates Admin of a new Organization
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [AllowAnonymous]
         [Route("Registeradmin")]
         public async Task<IHttpActionResult> Registeradmin(RegisterAdminBindingModel model)
@@ -342,8 +424,6 @@ namespace TasksApi.Controllers
             var user = new ApplicationUser() { UserName = model.Email, Email = model.Email };
 
             IdentityResult result = await UserManager.CreateAsync(user, model.Password);
-
-            // BEGIN CUSTOMIZATION
 
             //Creates Organization in Organizations table and creates user as admin in OrganizationUsers table
 
@@ -390,8 +470,6 @@ namespace TasksApi.Controllers
             con.Close();
             con.Dispose();
 
-            // END CUSTOMIZATION
-
             if (!result.Succeeded)
             {
                 return GetErrorResult(result);
@@ -405,7 +483,6 @@ namespace TasksApi.Controllers
                 identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
                 identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
                 identity.AddClaim(new Claim("role", "user"));
-
                 var props = new AuthenticationProperties()
                 {
                     IssuedUtc = DateTime.UtcNow,
@@ -429,6 +506,11 @@ namespace TasksApi.Controllers
         }
 
         // POST api/Account/Register
+        /// <summary>
+        /// Standard Register with addition of creating Org and OrgUser and generation Authkeys
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [AllowAnonymous]
         [Route("Register")]
         public async Task<IHttpActionResult> Register(RegisterBindingModel model)

@@ -7,7 +7,7 @@
       <Diagram DiagramId="e98fdc6dc6dc43fa8ea50b875aace4cc" Name="Diagram1">
         <EntityTypeShape EntityType="TASKSDBModel.TaskList" Width="1.5" PointX="0.75" PointY="0.75" IsExpanded="true" />
         <EntityTypeShape EntityType="TASKSDBModel.TaskMember" Width="1.5" PointX="2.75" PointY="0.75" IsExpanded="true" />
-        <EntityTypeShape EntityType="TASKSDBModel.Task" Width="1.5" PointX="0.75" PointY="3.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="TASKSDBModel.Task" Width="1.5" PointX="0.75" PointY="3" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

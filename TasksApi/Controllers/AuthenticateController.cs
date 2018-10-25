@@ -16,28 +16,43 @@ using SendGrid.Helpers.Mail;
 using SendGrid;
 using System.Threading.Tasks;
 using TasksApi.Models;
-using TasksApi;
 
 namespace TasksApi.Controllers
-
 {
-    public class ReqEmail
-    {
-        public string Email { get; set; }
-    }
-
-    public class KnockKnock
-    {
-        public string UserId { get; set; }
-        public string AuthKey01 { get; set; }
-        public string AuthKey02 { get; set; }
-
-    }
-
-    public class CheckInController : ApiController
+    public class AuthenticateController : ApiController
     {
 
-        // GET: api/checkin/
+        /// <summary>
+        /// Get Current User ID from Claim of Auth Token
+        /// </summary>
+        /// <returns></returns>
+        [NonAction]
+        public string getUserId()
+        {
+            var claimsIdentity = (ClaimsIdentity)this.RequestContext.Principal.Identity;
+            var userId = claimsIdentity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+            return userId;
+        }
+
+
+        /// <summary>
+        /// Get Current User Name from Claim of Auth Token
+        /// </summary>
+        /// <returns></returns>
+        [NonAction]
+        public string getUserName()
+        {
+            var claimsIdentity = (ClaimsIdentity)this.RequestContext.Principal.Identity;
+            var userId = claimsIdentity.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+            return userId;
+        }
+
+        /// <summary>
+        /// Function to Send Email
+        /// </summary>
+        /// <param name="link"></param>
+        /// <param name="sendaddress"></param>
+        /// <returns></returns>
         [HttpGet]
         public async Task<HttpResponseMessage> SendMail(string link, string sendaddress)
         {
@@ -55,10 +70,15 @@ namespace TasksApi.Controllers
         }
 
         // GET: api/checkin/
+        /// <summary>
+        /// Takes UserId and 2 provided GUIDs as Querystrings and tests that the keys are correct and that        
+        /// the expiration for the keys hasn't passed and then sends the requester an authentication token.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         [HttpGet]
-        //Takes UserId and 2 provided GUIDs as Querystrings and tests that the keys are correct and that        
-        //the expiration for the keys hasn't passed and then sends the requester an authentication token.
-        public HttpResponseMessage Get([FromUri] KnockKnock value)
+
+        public HttpResponseMessage Get([FromUri] AccessRequest value)
         {
 
             var UserManager = new UserManager<ApplicationUser>(new UserStore<ApplicationUser>(new ApplicationDbContext()));
@@ -112,7 +132,6 @@ namespace TasksApi.Controllers
                     identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
                     identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
                     identity.AddClaim(new Claim("role", "user"));
-
                     var props = new AuthenticationProperties()
                     {
                         IssuedUtc = DateTime.UtcNow,
@@ -148,9 +167,14 @@ namespace TasksApi.Controllers
         }
 
         // POST api/checkin/
+        /// <summary>
+        /// Takes provided email address and if user exists, generates 2 new GUIDS and expiration date and
+        /// saves them on the organizationuser record while generating a querystring url to be used to login.
+        /// </summary>
+        /// <param name="reqemail"></param>
+        /// <returns></returns>
         [HttpPost]
-        //Takes provided email address and if user exists, generates 2 new GUIDS and expiration date and
-        //saves them on the organizationuser record while generating a querystring url to be used to login.
+
         public async Task<HttpResponseMessage> Post([FromBody] ReqEmail reqemail)
         {
             var UserManager = new UserManager<ApplicationUser>(new UserStore<ApplicationUser>(new ApplicationDbContext()));
@@ -185,7 +209,7 @@ namespace TasksApi.Controllers
                 sqlConn.Close();
 
                 var tokenResponse = "/auth?UserId=" + user.Id + "&Authkey01=" + NewAuthKey01 + "&Authkey02=" + NewAuthKey02;
-                //await SendMail(tokenResponse, user.Email);
+                await SendMail(tokenResponse, user.Email);
 
                 HttpResponseMessage response = Request.CreateResponse(HttpStatusCode.OK, tokenResponse);
                 return response;

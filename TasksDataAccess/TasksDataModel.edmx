@@ -13,7 +13,7 @@
           <Property Name="Name" Type="nvarchar" MaxLength="100" Nullable="false" />
           <Property Name="Active" Type="bit" Nullable="false" />
           <Property Name="OwnerId" Type="nvarchar" MaxLength="128" Nullable="false" />
-          <Property Name="Created" Type="datetime2" Precision="7" Nullable="false" />
+          <Property Name="Created" Type="datetime" Nullable="false" />
         </EntityType>
         <EntityType Name="TaskMembers">
           <Key>
@@ -22,7 +22,7 @@
           <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="TaskListId" Type="int" Nullable="false" />
           <Property Name="UserId" Type="nvarchar" MaxLength="128" Nullable="false" />
-          <Property Name="Created" Type="datetime2" Precision="7" Nullable="false" />
+          <Property Name="Created" Type="datetime" Nullable="false" />
         </EntityType>
         <EntityType Name="Tasks">
           <Key>
@@ -32,9 +32,9 @@
           <Property Name="Name" Type="nvarchar" MaxLength="255" Nullable="false" />
           <Property Name="Complete" Type="bit" Nullable="false" />
           <Property Name="OwnerId" Type="nvarchar" MaxLength="128" Nullable="false" />
-          <Property Name="Created" Type="datetime2" Precision="7" Nullable="false" />
+          <Property Name="Created" Type="datetime" Nullable="false" />
           <Property Name="CompletedBy" Type="nvarchar" MaxLength="128" />
-          <Property Name="CompletedOn" Type="datetime2" Precision="7" />
+          <Property Name="CompletedOn" Type="datetime" />
           <Property Name="ListId" Type="int" Nullable="false" />
           <Property Name="Progress" Type="int" Nullable="false" />
         </EntityType>
@@ -55,7 +55,7 @@
           <Property Name="Name" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="Active" Type="Boolean" Nullable="false" />
           <Property Name="OwnerId" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="false" />
-          <Property Name="Created" Type="DateTime" Nullable="false" Precision="7" />
+          <Property Name="Created" Type="DateTime" Nullable="false" Precision="3" />
         </EntityType>
         <EntityType Name="TaskMember">
           <Key>
@@ -64,27 +64,27 @@
           <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="TaskListId" Type="Int32" Nullable="false" />
           <Property Name="UserId" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="false" />
-          <Property Name="Created" Type="DateTime" Nullable="false" Precision="7" />
+          <Property Name="Created" Type="DateTime" Nullable="false" Precision="3" />
         </EntityType>
+        <EntityContainer Name="TASKSDBEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="TaskLists" EntityType="Self.TaskList" />
+          <EntitySet Name="TaskMembers" EntityType="Self.TaskMember" />
+          <EntitySet Name="Tasks" EntityType="TASKSDBModel.Task" />
+        </EntityContainer>
         <EntityType Name="Task">
           <Key>
             <PropertyRef Name="Id" />
           </Key>
           <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Name" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Name" Type="String" Nullable="false" MaxLength="255" FixedLength="false" Unicode="true" />
           <Property Name="Complete" Type="Boolean" Nullable="false" />
-          <Property Name="OwnerId" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="false" />
-          <Property Name="Created" Type="DateTime" Nullable="false" Precision="7" />
+          <Property Name="OwnerId" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="Created" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="CompletedBy" Type="String" MaxLength="128" FixedLength="false" Unicode="true" />
-          <Property Name="CompletedOn" Type="DateTime" Precision="7" />
+          <Property Name="CompletedOn" Type="DateTime" Precision="3" />
           <Property Name="ListId" Type="Int32" Nullable="false" />
           <Property Name="Progress" Type="Int32" Nullable="false" />
         </EntityType>
-        <EntityContainer Name="TASKSDBEntities" annotation:LazyLoadingEnabled="true">
-          <EntitySet Name="TaskLists" EntityType="Self.TaskList" />
-          <EntitySet Name="TaskMembers" EntityType="Self.TaskMember" />
-          <EntitySet Name="Tasks" EntityType="Self.Task" />
-        </EntityContainer>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -117,13 +117,13 @@
               <MappingFragment StoreEntitySet="Tasks">
                 <ScalarProperty Name="Progress" ColumnName="Progress" />
                 <ScalarProperty Name="ListId" ColumnName="ListId" />
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Name" ColumnName="Name" />
-                <ScalarProperty Name="Complete" ColumnName="Complete" />
-                <ScalarProperty Name="OwnerId" ColumnName="OwnerId" />
-                <ScalarProperty Name="Created" ColumnName="Created" />
-                <ScalarProperty Name="CompletedBy" ColumnName="CompletedBy" />
                 <ScalarProperty Name="CompletedOn" ColumnName="CompletedOn" />
+                <ScalarProperty Name="CompletedBy" ColumnName="CompletedBy" />
+                <ScalarProperty Name="Created" ColumnName="Created" />
+                <ScalarProperty Name="OwnerId" ColumnName="OwnerId" />
+                <ScalarProperty Name="Complete" ColumnName="Complete" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
