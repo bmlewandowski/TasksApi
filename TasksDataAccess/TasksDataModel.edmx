@@ -47,14 +47,19 @@
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="TASKSDBModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityContainer Name="TASKSDBEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="TaskLists" EntityType="TASKSDBModel.TaskList" />
+          <EntitySet Name="TaskMembers" EntityType="TASKSDBModel.TaskMember" />
+          <EntitySet Name="Tasks" EntityType="TASKSDBModel.Task" />
+        </EntityContainer>
         <EntityType Name="TaskList">
           <Key>
             <PropertyRef Name="Id" />
           </Key>
           <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Name" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Name" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
           <Property Name="Active" Type="Boolean" Nullable="false" />
-          <Property Name="OwnerId" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="OwnerId" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
           <Property Name="Created" Type="DateTime" Nullable="false" Precision="3" />
         </EntityType>
         <EntityType Name="TaskMember">
@@ -63,14 +68,9 @@
           </Key>
           <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="TaskListId" Type="Int32" Nullable="false" />
-          <Property Name="UserId" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="UserId" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
           <Property Name="Created" Type="DateTime" Nullable="false" Precision="3" />
         </EntityType>
-        <EntityContainer Name="TASKSDBEntities" annotation:LazyLoadingEnabled="true">
-          <EntitySet Name="TaskLists" EntityType="Self.TaskList" />
-          <EntitySet Name="TaskMembers" EntityType="Self.TaskMember" />
-          <EntitySet Name="Tasks" EntityType="TASKSDBModel.Task" />
-        </EntityContainer>
         <EntityType Name="Task">
           <Key>
             <PropertyRef Name="Id" />
@@ -94,21 +94,21 @@
           <EntitySetMapping Name="TaskLists">
             <EntityTypeMapping TypeName="TASKSDBModel.TaskList">
               <MappingFragment StoreEntitySet="TaskLists">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Name" ColumnName="Name" />
-                <ScalarProperty Name="Active" ColumnName="Active" />
-                <ScalarProperty Name="OwnerId" ColumnName="OwnerId" />
                 <ScalarProperty Name="Created" ColumnName="Created" />
+                <ScalarProperty Name="OwnerId" ColumnName="OwnerId" />
+                <ScalarProperty Name="Active" ColumnName="Active" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="TaskMembers">
             <EntityTypeMapping TypeName="TASKSDBModel.TaskMember">
               <MappingFragment StoreEntitySet="TaskMembers">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="TaskListId" ColumnName="TaskListId" />
-                <ScalarProperty Name="UserId" ColumnName="UserId" />
                 <ScalarProperty Name="Created" ColumnName="Created" />
+                <ScalarProperty Name="UserId" ColumnName="UserId" />
+                <ScalarProperty Name="TaskListId" ColumnName="TaskListId" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
